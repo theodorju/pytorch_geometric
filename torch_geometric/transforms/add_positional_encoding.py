@@ -57,11 +57,15 @@ class AddLaplacianEigenvectorPE(BaseTransform):
         k: int,
         attr_name: Optional[str] = 'laplacian_eigenvector_pe',
         is_undirected: bool = False,
+        abs_pe: bool = False,
+        no_sign_flip: bool = False,
         **kwargs,
     ):
         self.k = k
         self.attr_name = attr_name
         self.is_undirected = is_undirected
+        self.abs_pe = abs_pe
+        self.no_sign_flip = no_sign_flip
         self.kwargs = kwargs
 
     def forward(self, data: Data) -> Data:
@@ -87,9 +91,12 @@ class AddLaplacianEigenvectorPE(BaseTransform):
         )
 
         eig_vecs = np.real(eig_vecs[:, eig_vals.argsort()])
-        pe = torch.from_numpy(eig_vecs[:, 1:self.k + 1])
-        sign = -1 + 2 * torch.randint(0, 2, (self.k, ))
-        pe *= sign
+        if self.abs_pe:
+            pe = torch.from_numpy(np.abs(eig_vecs[:, 1:self.k + 1]))
+        else:
+            pe = torch.from_numpy(eig_vecs[:, 1:self.k + 1])
+            sign = -1 + 2 * torch.randint(0, 2, (self.k, )) if self.no_sign_flip else 1
+            pe *= sign
 
         data = add_node_attr(data, pe, attr_name=self.attr_name)
         return data
