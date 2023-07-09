@@ -94,10 +94,11 @@ class AddLaplacianEigenvectorPE(BaseTransform):
         if self.abs_pe:
             pe = torch.from_numpy(np.abs(eig_vecs[:, 1:self.k + 1]))
         else:
-            pe = torch.from_numpy(eig_vecs[:, 1:self.k + 1])
-            sign = -1 + 2 * torch.randint(0, 2, (self.k, )) if self.no_sign_flip else 1
+            pe = torch.from_numpy(eig_vecs[:, 1: self.k + 1])
+            sign = (
+                -1 + 2 * torch.randint(0, 2, (self.k,)) if not self.no_sign_flip else 1
+            )
             pe *= sign
-
         data = add_node_attr(data, pe, attr_name=self.attr_name)
         return data
 
